@@ -1,8 +1,22 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                xmlns:tools="http://schemas.android.com/tools"
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                tools:context=".LocatrActivity"
-    android:id="@+id/fragment_container">
+                android:layout_height="match_parent">
 
-</FrameLayout>
+    <ImageView
+        android:id="@+id/image"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:background="@android:color/white"
+        android:contentDescription="@string/image"
+        android:layout_centerInParent="true"/>
+
+    <ProgressBar
+        android:id="@+id/fragment_progress_bar"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:visibility="invisible"
+        style="?android:attr/progressBarStyleLarge"/>
+
+</RelativeLayout>
