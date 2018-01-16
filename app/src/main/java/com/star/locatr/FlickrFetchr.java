@@ -1,6 +1,7 @@
 package com.star.locatr;
 
 
+import android.location.Location;
 import android.net.Uri;
 import android.util.Log;
 
@@ -35,6 +36,9 @@ public class FlickrFetchr {
     private static final String EXTRAS_KEY = "extras";
     private static final String EXTRAS_VALUE = "url_s";
     private static final String PAGE_KEY = "page";
+
+    private static final String LAT = "lat";
+    private static final String LON = "lon";
 
     private static final int START_PAGE = 1;
 
@@ -89,22 +93,24 @@ public class FlickrFetchr {
         return getRecentPhotos(START_PAGE);
     }
 
-    public List<GalleryItem> searchPhotos(int page, String query) {
-        String url = buildUrl(SEARCH_METHOD, page, query);
+    public List<GalleryItem> searchPhotos(int page, Location location) {
+        String url = buildUrl(SEARCH_METHOD, page, location);
         return downloadGalleryItems(url);
     }
 
-    public List<GalleryItem> searchPhotos(String query) {
-        return searchPhotos(START_PAGE, query);
+    public List<GalleryItem> searchPhotos(Location location) {
+        return searchPhotos(START_PAGE, location);
     }
 
-    private String buildUrl(String method, int page, String query) {
+    private String buildUrl(String method, int page, Location location) {
         Uri.Builder uriBuilder = ENDPOINT.buildUpon()
                 .appendQueryParameter(METHOD_KEY, method)
                 .appendQueryParameter(PAGE_KEY, page + "");
 
         if (method.equals(SEARCH_METHOD)) {
-            uriBuilder.appendQueryParameter(TEXT, query);
+            uriBuilder
+                    .appendQueryParameter(LAT, "" + location.getLatitude())
+                    .appendQueryParameter(LON, "" + location.getLongitude());
         }
 
         return uriBuilder.build().toString();

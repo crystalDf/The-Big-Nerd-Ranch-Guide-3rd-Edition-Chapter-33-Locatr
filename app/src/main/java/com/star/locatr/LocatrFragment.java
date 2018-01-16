@@ -21,12 +21,11 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.google.android.gms.common.ConnectionResult;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +34,12 @@ public class LocatrFragment extends Fragment {
 
     private static final String TAG = "LocatrFragment";
 
-    private static final int REQUEST_CODE = 0;
+    private static final int REQUEST_LOCATION_PERMISSIONS = 0;
+
+    private static final String[] LOCATION_PERMISSIONS = new String[] {
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+    };
 
     private ImageView mImageView;
     private ProgressBar mProgressBar;
@@ -52,12 +56,16 @@ public class LocatrFragment extends Fragment {
 
         setHasOptionsMenu(true);
 
+        if (getActivity() == null) {
+            return;
+        }
+
         mGoogleApiClient = new GoogleApiClient.Builder(getActivity())
                 .addApi(LocationServices.API)
                 .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
                     @Override
                     public void onConnected(@Nullable Bundle bundle) {
-                        getActivity().supportInvalidateOptionsMenu();
+                        getActivity().invalidateOptionsMenu();
                         Log.i(TAG, "Connected");
                     }
 
@@ -66,14 +74,8 @@ public class LocatrFragment extends Fragment {
 
                     }
                 })
-                .addOnConnectionFailedListener(new GoogleApiClient.OnConnectionFailedListener() {
-                    @Override
-                    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-                        Log.i(TAG, "Connection Failed");
-                    }
-                })
+                .addOnConnectionFailedListener(connectionResult -> Log.i(TAG, "Connection Failed"))
                 .build();
-
     }
 
     @Override
@@ -81,9 +83,8 @@ public class LocatrFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_locatr, container, false);
 
-        mImageView = (ImageView) view.findViewById(R.id.image);
-
-        mProgressBar = (ProgressBar) view.findViewById(R.id.fragment_progress_bar);
+        mImageView = view.findViewById(R.id.image);
+        mProgressBar = view.findViewById(R.id.fragment_progress_bar);
 
         return view;
     }
@@ -92,7 +93,11 @@ public class LocatrFragment extends Fragment {
     public void onStart() {
         super.onStart();
 
-        getActivity().supportInvalidateOptionsMenu();
+        if (getActivity() == null) {
+            return;
+        }
+
+        getActivity().invalidateOptionsMenu();
 
         mGoogleApiClient.connect();
     }
@@ -128,25 +133,26 @@ public class LocatrFragment extends Fragment {
 
     private void findImage() {
 
-        List<String> permissionList = new ArrayList<>();
-
-        if (ActivityCompat.checkSelfPermission(getActivity(),
-                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            permissionList.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        if (getActivity() == null) {
+            return;
         }
 
-        if (ActivityCompat.checkSelfPermission(getActivity(),
-                Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            permissionList.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+        List<String> permissionList = new ArrayList<>();
+
+        for (String permission : LOCATION_PERMISSIONS) {
+            if (ActivityCompat.checkSelfPermission(getActivity(), permission)
+                    != PackageManager.PERMISSION_GRANTED) {
+                permissionList.add(permission);
+            }
         }
 
         if (!permissionList.isEmpty()) {
-            ActivityCompat.requestPermissions(getActivity(),
-                    permissionList.toArray(new String[permissionList.size()]), REQUEST_CODE);
+            requestPermissions(
+                    permissionList.toArray(new String[permissionList.size()]),
+                    REQUEST_LOCATION_PERMISSIONS);
         } else {
             doFindImage();
         }
-
     }
 
     @Override
@@ -154,11 +160,11 @@ public class LocatrFragment extends Fragment {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         switch (requestCode) {
-            case REQUEST_CODE:
+            case REQUEST_LOCATION_PERMISSIONS:
                 if (grantResults.length > 0) {
-                    for (int grantResult : grantResults) {
-                        if (grantResult != PackageManager.PERMISSION_GRANTED) {
-                            Toast.makeText(getActivity(), "Some permission denied. ",
+                    for (int i = 0; i < grantResults.length; i++) {
+                        if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
+                            Toast.makeText(getActivity(), permissions[i] + " denied. ",
                                     Toast.LENGTH_LONG).show();
                             return;
                         }
@@ -169,7 +175,6 @@ public class LocatrFragment extends Fragment {
             default:
                 break;
         }
-
     }
 
     private void doFindImage() {
@@ -181,12 +186,9 @@ public class LocatrFragment extends Fragment {
             locationRequest.setInterval(0);
 
             LocationServices.FusedLocationApi
-                    .requestLocationUpdates(mGoogleApiClient, locationRequest, new LocationListener() {
-                        @Override
-                        public void onLocationChanged(Location location) {
-                            Log.i(TAG, "Got a fix: " + location);
-                            new SearchTask().execute(location);
-                        }
+                    .requestLocationUpdates(mGoogleApiClient, locationRequest, location -> {
+                        Log.i(TAG, "Got a fix: " + location);
+                        new SearchTask().execute(location);
                     });
         } catch (SecurityException se) {
             se.printStackTrace();
@@ -221,9 +223,14 @@ public class LocatrFragment extends Fragment {
     }
 
     private void bindGalleryItem(GalleryItem galleryItem) {
-        Picasso.with(getActivity())
+
+        if (getActivity() == null) {
+            return;
+        }
+
+        Glide.with(getActivity())
                 .load(galleryItem.getUrl())
-                .placeholder(R.drawable.emma)
+                .apply(new RequestOptions().placeholder(R.drawable.emma))
                 .into(mImageView);
     }
 }
