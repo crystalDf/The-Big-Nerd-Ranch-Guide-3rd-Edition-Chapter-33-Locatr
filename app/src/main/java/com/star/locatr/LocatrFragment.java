@@ -215,6 +215,7 @@ public class LocatrFragment extends Fragment {
     }
 
     private void showProgressBar(boolean isShown) {
+
         if (isShown) {
             mProgressBar.setVisibility(View.VISIBLE);
         } else {
